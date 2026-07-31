@@ -1,0 +1,26 @@
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+
+# Backend
+backend/node_modules/
+backend/dist/
+backend/build/
+backend/coverage/
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.production
+
+# Archivos generales
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
