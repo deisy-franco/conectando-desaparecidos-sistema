@@ -1,15 +1,8 @@
-import "dotenv/config";
+// src/server.ts
+import app from './app';
 
-import app from "./app";
+const PORT = 3001; 
 
-const portText = process.env.PORT ?? "3001";
-const port = Number.parseInt(portText, 10);
-
-if (Number.isNaN(port)) {
-  throw new Error("La variable PORT debe contener un número válido.");
-}
-
-app.listen(port, () => {
-  console.log(`API ejecutándose en http://localhost:${port}`);
-  console.log(`Health check: http://localhost:${port}/api/health`);
+app.listen(PORT, () => {
+    console.log(`✅ Servidor API corriendo en http://localhost:${PORT}`);
 });
