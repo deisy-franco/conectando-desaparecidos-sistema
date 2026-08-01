@@ -146,7 +146,7 @@ export default function Page(){
         alert("Error al conectar con la base de datos. Revisa la consola.");
     }
 };
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const publicarFicha = async (datosDelFormulario: any) => {
     try {
         // Preparamos el objeto con los datos. 
