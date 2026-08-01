@@ -1,0 +1,503 @@
+name: Validar Pull Requests del sistema
+
+on:
+  pull_request:
+    branches:
+      - QA
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+# Si se sube una corrección nueva al mismo PR,
+# cancela la ejecución anterior y comienza nuevamente.
+concurrency:
+  group: validar-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
+  FRONTEND_IMAGE: conectando-frontend:qa-candidate
+  BACKEND_IMAGE: conectando-backend:qa-candidate
+
+  FRONTEND_CONTAINER: conectando-frontend-runner
+  BACKEND_CONTAINER: conectando-backend-runner
+
+  FRONTEND_PORT: 3000
+  BACKEND_PORT: 3001
+
+jobs:
+
+  # ============================================================
+  # TRABAJO 1:
+  # VALIDAR RAMAS, FRONTEND Y BACKEND EN DEISY-SISTEMA
+  # ============================================================
+  validar-sistema:
+    name: Validar frontend y backend
+
+    # Solo ejecuta código que pertenezca al mismo repositorio.
+    # Evita ejecutar PR provenientes de forks externos.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+
+    runs-on:
+      - self-hosted
+      - windows
+      - x64
+
+    timeout-minutes: 25
+
+    env:
+      # Usa una carpeta de caché escribible por el runner.
+      NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
+
+    steps:
+
+      # --------------------------------------------------------
+      # 1. Mostrar que se ejecuta en tu computadora
+      # --------------------------------------------------------
+      - name: Mostrar información del runner
+        shell: powershell
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Runner: $env:RUNNER_NAME"
+          Write-Host "Sistema operativo: $env:RUNNER_OS"
+          Write-Host "Arquitectura: $env:RUNNER_ARCH"
+          Write-Host "Equipo: $env:COMPUTERNAME"
+          Write-Host "Usuario: $env:USERNAME"
+          Write-Host "Directorio: $env:GITHUB_WORKSPACE"
+          Write-Host "=========================================="
+
+          whoami
+          node --version
+          npm --version
+
+      # --------------------------------------------------------
+      # 2. Validar el flujo de ramas
+      # --------------------------------------------------------
+      - name: Validar ramas permitidas
+        shell: powershell
+        env:
+          RAMA_ORIGEN: ${{ github.head_ref }}
+          RAMA_DESTINO: ${{ github.base_ref }}
+        run: |
+          Write-Host "Rama de origen: $env:RAMA_ORIGEN"
+          Write-Host "Rama de destino: $env:RAMA_DESTINO"
+
+          # QA solamente acepta ramas feature/*
+          if ($env:RAMA_DESTINO -eq "QA") {
+              if ($env:RAMA_ORIGEN -like "feature/*") {
+                  Write-Host "Flujo permitido: $env:RAMA_ORIGEN -> QA"
+                  exit 0
+              }
+
+              throw "QA solamente acepta Pull Requests desde feature/*."
+          }
+
+          # main solamente acepta cambios desde QA
+          if ($env:RAMA_DESTINO -eq "main") {
+              if ($env:RAMA_ORIGEN -eq "QA") {
+                  Write-Host "Flujo permitido: QA -> main"
+                  exit 0
+              }
+
+              throw "main solamente acepta Pull Requests desde QA."
+          }
+
+          throw "Flujo de ramas no permitido."
+
+      # --------------------------------------------------------
+      # 3. Descargar el código del Pull Request
+      # --------------------------------------------------------
+      - name: Descargar código del Pull Request
+        uses: actions/checkout@v7
+        with:
+          clean: true
+          fetch-depth: 1
+          persist-credentials: false
+
+      # --------------------------------------------------------
+      # 4. Configurar Node.js
+      # --------------------------------------------------------
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Mostrar versiones de Node y npm
+        shell: powershell
+        run: |
+          node --version
+          npm --version
+
+      # ========================================================
+      # FRONTEND
+      # ========================================================
+
+      - name: Instalar dependencias del frontend
+        working-directory: frontend
+        shell: powershell
+        run: npm ci
+
+      - name: Ejecutar ESLint del frontend
+        working-directory: frontend
+        shell: powershell
+        run: npm run lint
+
+      - name: Compilar frontend
+        working-directory: frontend
+        shell: powershell
+        run: npm run build
+
+      # ========================================================
+      # BACKEND
+      # ========================================================
+
+      - name: Instalar dependencias del backend
+        working-directory: backend
+        shell: powershell
+        run: npm ci
+
+      - name: Ejecutar ESLint del backend
+        working-directory: backend
+        shell: powershell
+        run: npm run lint
+
+      - name: Ejecutar pruebas del backend
+        working-directory: backend
+        shell: powershell
+        run: npm test --if-present
+
+      - name: Compilar backend
+        working-directory: backend
+        shell: powershell
+        run: npm run build
+
+
+  # ============================================================
+  # TRABAJO 2:
+  # DOCKERIZAR Y EJECUTAR TODO EN DEISY-SISTEMA
+  # ============================================================
+  dockerizar-sistema:
+    name: Dockerizar frontend y backend
+
+    needs:
+      - validar-sistema
+
+    # Solo continúa si la validación anterior terminó correctamente.
+    if: ${{ needs.validar-sistema.result == 'success' && github.event.pull_request.head.repo.full_name == github.repository }}
+
+    runs-on:
+      - self-hosted
+      - windows
+      - x64
+
+    timeout-minutes: 30
+
+    steps:
+
+      # --------------------------------------------------------
+      # 1. Descargar nuevamente el código
+      # --------------------------------------------------------
+      - name: Descargar código del Pull Request
+        uses: actions/checkout@v7
+        with:
+          clean: true
+          fetch-depth: 1
+          persist-credentials: false
+
+      # --------------------------------------------------------
+      # 2. Mostrar información del runner
+      # --------------------------------------------------------
+      - name: Mostrar información del runner
+        shell: powershell
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Runner: $env:RUNNER_NAME"
+          Write-Host "Sistema operativo: $env:RUNNER_OS"
+          Write-Host "Arquitectura: $env:RUNNER_ARCH"
+          Write-Host "Equipo: $env:COMPUTERNAME"
+          Write-Host "Usuario: $env:USERNAME"
+          Write-Host "=========================================="
+
+          whoami
+
+      # --------------------------------------------------------
+      # 3. Comprobar que Docker esté disponible
+      # --------------------------------------------------------
+      - name: Comprobar Docker
+        shell: powershell
+        run: |
+          Write-Host "Ubicación de Docker:"
+          where.exe docker
+
+          Write-Host "Versión de Docker:"
+          docker version
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "El runner no puede conectarse con Docker Engine."
+          }
+
+          Write-Host "Información de Docker:"
+          docker info
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "No se pudo obtener información de Docker."
+          }
+
+      # --------------------------------------------------------
+      # 4. Eliminar contenedores anteriores
+      # --------------------------------------------------------
+      - name: Eliminar contenedores anteriores
+        shell: powershell
+        run: |
+          $contenedores = @(
+              $env:FRONTEND_CONTAINER,
+              $env:BACKEND_CONTAINER
+          )
+
+          foreach ($contenedor in $contenedores) {
+              $id = docker ps -aq `
+                --filter "name=^/$contenedor$"
+
+              if ($id) {
+                  Write-Host "Eliminando contenedor anterior: $contenedor"
+                  docker rm -f $contenedor
+              }
+              else {
+                  Write-Host "No existe el contenedor: $contenedor"
+              }
+          }
+
+          exit 0
+
+      # ========================================================
+      # CONSTRUIR BACKEND
+      # ========================================================
+
+      - name: Construir imagen del backend
+        shell: powershell
+        run: |
+          Write-Host "Construyendo $env:BACKEND_IMAGE"
+
+          docker build `
+            --file "./backend/Dockerfile" `
+            --tag $env:BACKEND_IMAGE `
+            "./backend"
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "No fue posible construir la imagen del backend."
+          }
+
+          docker image inspect $env:BACKEND_IMAGE
+
+      # ========================================================
+      # CONSTRUIR FRONTEND
+      # ========================================================
+
+      - name: Construir imagen del frontend
+        shell: powershell
+        run: |
+          Write-Host "Construyendo $env:FRONTEND_IMAGE"
+
+          docker build `
+            --file "./frontend/Dockerfile" `
+            --tag $env:FRONTEND_IMAGE `
+            "./frontend"
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "No fue posible construir la imagen del frontend."
+          }
+
+          docker image inspect $env:FRONTEND_IMAGE
+
+      # ========================================================
+      # EJECUTAR BACKEND
+      # ========================================================
+
+      - name: Ejecutar contenedor del backend
+        shell: powershell
+        run: |
+          Write-Host "Iniciando backend..."
+
+          docker run `
+            --detach `
+            --name $env:BACKEND_CONTAINER `
+            --publish "127.0.0.1:${env:BACKEND_PORT}:3001" `
+            --env PORT=3001 `
+            --env FRONTEND_URL=http://127.0.0.1:3000 `
+            $env:BACKEND_IMAGE
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "No fue posible iniciar el backend."
+          }
+
+          docker ps --filter "name=$env:BACKEND_CONTAINER"
+
+      # ========================================================
+      # EJECUTAR FRONTEND
+      # ========================================================
+
+      - name: Ejecutar contenedor del frontend
+        shell: powershell
+        run: |
+          Write-Host "Iniciando frontend..."
+
+          docker run `
+            --detach `
+            --name $env:FRONTEND_CONTAINER `
+            --publish "127.0.0.1:${env:FRONTEND_PORT}:3000" `
+            $env:FRONTEND_IMAGE
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "No fue posible iniciar el frontend."
+          }
+
+          docker ps --filter "name=$env:FRONTEND_CONTAINER"
+
+      # ========================================================
+      # PROBAR BACKEND
+      # ========================================================
+
+      - name: Comprobar API del backend
+        shell: powershell
+        run: |
+          $url = "http://127.0.0.1:${env:BACKEND_PORT}/api/health"
+          $backendDisponible = $false
+
+          for ($intento = 1; $intento -le 15; $intento++) {
+              try {
+                  Write-Host "Intento ${intento}: comprobando $url"
+
+                  $respuesta = Invoke-RestMethod `
+                    -Uri $url `
+                    -TimeoutSec 10
+
+                  if ($respuesta.status -eq "ok") {
+                      Write-Host "Backend funcionando correctamente."
+                      Write-Host "Servicio: $($respuesta.servicio)"
+                      $backendDisponible = $true
+                      break
+                  }
+              }
+              catch {
+                  Write-Host "El backend todavía no responde."
+
+                  if ($intento -lt 15) {
+                      Start-Sleep -Seconds 3
+                  }
+              }
+          }
+
+          if (-not $backendDisponible) {
+              Write-Host "Logs del backend:"
+              docker logs $env:BACKEND_CONTAINER
+
+              throw "Falló la comprobación del backend."
+          }
+
+      # ========================================================
+      # PROBAR FRONTEND
+      # ========================================================
+
+      - name: Comprobar aplicación frontend
+        shell: powershell
+        run: |
+          $url = "http://127.0.0.1:${env:FRONTEND_PORT}"
+          $frontendDisponible = $false
+
+          for ($intento = 1; $intento -le 15; $intento++) {
+              try {
+                  Write-Host "Intento ${intento}: comprobando $url"
+
+                  $respuesta = Invoke-WebRequest `
+                    -Uri $url `
+                    -UseBasicParsing `
+                    -TimeoutSec 10
+
+                  Write-Host "Código HTTP: $($respuesta.StatusCode)"
+
+                  if ($respuesta.StatusCode -eq 200) {
+                      Write-Host "Frontend funcionando correctamente."
+                      $frontendDisponible = $true
+                      break
+                  }
+              }
+              catch {
+                  Write-Host "El frontend todavía no responde."
+
+                  if ($intento -lt 15) {
+                      Start-Sleep -Seconds 3
+                  }
+              }
+          }
+
+          if (-not $frontendDisponible) {
+              Write-Host "Logs del frontend:"
+              docker logs $env:FRONTEND_CONTAINER
+
+              throw "Falló la comprobación del frontend."
+          }
+
+      # --------------------------------------------------------
+      # 8. Mostrar imágenes creadas
+      # --------------------------------------------------------
+      - name: Mostrar imágenes Docker creadas
+        shell: powershell
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Imagen del frontend:"
+          Write-Host "=========================================="
+
+          docker images `
+            --filter "reference=$env:FRONTEND_IMAGE"
+
+          Write-Host "=========================================="
+          Write-Host "Imagen del backend:"
+          Write-Host "=========================================="
+
+          docker images `
+            --filter "reference=$env:BACKEND_IMAGE"
+
+      # --------------------------------------------------------
+      # 9. Mostrar logs cuando falle algún paso
+      # --------------------------------------------------------
+      - name: Mostrar logs de diagnóstico
+        if: ${{ failure() }}
+        shell: powershell
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Logs del frontend"
+          Write-Host "=========================================="
+
+          docker logs $env:FRONTEND_CONTAINER 2>$null
+
+          Write-Host "=========================================="
+          Write-Host "Logs del backend"
+          Write-Host "=========================================="
+
+          docker logs $env:BACKEND_CONTAINER 2>$null
+
+          exit 0
+
+      # --------------------------------------------------------
+      # 10. Eliminar contenedores temporales
+      # --------------------------------------------------------
+      - name: Eliminar contenedores temporales
+        if: ${{ always() }}
+        shell: powershell
+        run: |
+          Write-Host "Eliminando contenedores temporales..."
+
+          docker rm -f $env:FRONTEND_CONTAINER 2>$null
+          docker rm -f $env:BACKEND_CONTAINER 2>$null
+
+          Write-Host "Limpieza terminada."
+
+          exit 0
