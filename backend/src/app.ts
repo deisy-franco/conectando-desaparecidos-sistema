@@ -1,43 +1,34 @@
-import cors from "cors";
-import express from "express";
+// src/app.ts
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
 
-import { healthRouter } from "./routes/health.routes";
+// Importamos todas tus rutas separadas
+//import usuariosRoutes from './routes/usuarios';
+//import fichasRoutes from './routes/fichas';
+//import hallazgosRoutes from './routes/hallazgos';
+//import reportesRoutes from './routes/reportes';
+//import estadisticasRoutes from './routes/estadisticas';
 
 const app = express();
 
-const frontendUrl =
-  process.env.FRONTEND_URL ?? "http://localhost:3000";
+// Middlewares globales
+app.use(cors()); 
+app.use(express.json());
 
-// Evita mostrar información innecesaria sobre Express.
-app.disable("x-powered-by");
+// Expone la carpeta uploads para que el navegador pueda ver las fotos
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Permite solicitudes desde el frontend configurado.
-app.use(
-  cors({
-    origin: frontendUrl,
-    credentials: true,
-  })
-);
-
-// Permite recibir JSON en las solicitudes.
-app.use(express.json({ limit: "10mb" }));
-
-// Ruta principal.
-app.get("/", (_request, response) => {
-  response.status(200).json({
-    nombre: "Conectando Desaparecidos API",
-    version: "1.0.0",
-  });
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok', mensaje: 'Backend funcionando' });
 });
+// Conectamos los Endpoints (Nota cómo quitamos el '/api/fichas' de los archivos individuales porque aquí se define la base)
+//app.use('/api/usuarios', usuariosRoutes);
+//app.use('/api/login', usuariosRoutes); // Puedes meter el login dentro del archivo de usuarios
+//app.use('/api/fichas', fichasRoutes);
+//app.use('/api/hallazgos', hallazgosRoutes);
+//app.use('/api/reportes', reportesRoutes);
+//app.use('/api/estadisticas', estadisticasRoutes);
 
-// Ruta utilizada para validar que el servidor funciona.
-app.use("/api/health", healthRouter);
-
-// Respuesta para rutas inexistentes.
-app.use((_request, response) => {
-  response.status(404).json({
-    error: "Ruta no encontrada",
-  });
-});
 
 export default app;
