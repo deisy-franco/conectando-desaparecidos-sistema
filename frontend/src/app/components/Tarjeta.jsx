@@ -79,6 +79,7 @@ export default function Tarjeta({datos}) {
 
         {datos.foto && (
           <div style={{ display: 'flex',gap:'1.5rem',paddingBottom: '1rem' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={datos.foto} 
               alt="Foto del usuario" 
