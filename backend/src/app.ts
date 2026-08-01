@@ -27,4 +27,5 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 //app.use('/api/reportes', reportesRoutes);
 //app.use('/api/estadisticas', estadisticasRoutes);
 
+
 export default app;
