@@ -14,7 +14,7 @@ on:
 permissions:
   contents: read
 
-# Si se sube una corrección nueva al mismo PR,
+# Si se agrega otro commit al mismo Pull Request,
 # cancela la ejecución anterior y comienza nuevamente.
 concurrency:
   group: validar-pr-${{ github.event.pull_request.number }}
@@ -33,18 +33,17 @@ env:
   BACKEND_PORT: 3001
 
 jobs:
-
   # ============================================================
   # TRABAJO 1:
-  # VALIDAR RAMAS, FRONTEND Y BACKEND EN DEISY-SISTEMA
+  # VALIDAR RAMAS, FRONTEND Y BACKEND
   # ============================================================
   validar-sistema:
     name: Validar frontend y backend
 
-    # Solo ejecuta código que pertenezca al mismo repositorio.
-    # Evita ejecutar PR provenientes de forks externos.
+    # Evita ejecutar en tu computadora código enviado desde forks.
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
 
+    # Ejecutar en el runner autohospedado DEISY-SISTEMA.
     runs-on:
       - self-hosted
       - windows
@@ -52,14 +51,64 @@ jobs:
 
     timeout-minutes: 25
 
-    env:
-      # Usa una carpeta de caché escribible por el runner.
-      NPM_CONFIG_CACHE: ${{ runner.temp }}\npm-cache
-
     steps:
+      # --------------------------------------------------------
+      # 1. Validar el flujo de ramas
+      # --------------------------------------------------------
+      - name: Validar ramas permitidas
+        shell: powershell
+        env:
+          RAMA_ORIGEN: ${{ github.head_ref }}
+          RAMA_DESTINO: ${{ github.base_ref }}
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Rama de origen: $env:RAMA_ORIGEN"
+          Write-Host "Rama de destino: $env:RAMA_DESTINO"
+          Write-Host "=========================================="
+
+          # QA solamente acepta Pull Requests desde feature/*
+          if ($env:RAMA_DESTINO -eq "QA") {
+              if ($env:RAMA_ORIGEN -like "feature/*") {
+                  Write-Host "Flujo permitido: $env:RAMA_ORIGEN -> QA"
+                  exit 0
+              }
+
+              throw "QA solamente acepta Pull Requests desde ramas feature/*."
+          }
+
+          # main solamente acepta Pull Requests desde QA
+          if ($env:RAMA_DESTINO -eq "main") {
+              if ($env:RAMA_ORIGEN -eq "QA") {
+                  Write-Host "Flujo permitido: QA -> main"
+                  exit 0
+              }
+
+              throw "main solamente acepta Pull Requests desde QA."
+          }
+
+          throw "El flujo de ramas no está permitido."
 
       # --------------------------------------------------------
-      # 1. Mostrar que se ejecuta en tu computadora
+      # 2. Descargar el código del Pull Request
+      # --------------------------------------------------------
+      - name: Descargar código del Pull Request
+        uses: actions/checkout@v7
+        with:
+          clean: true
+          fetch-depth: 1
+          persist-credentials: false
+
+      # --------------------------------------------------------
+      # 3. Configurar Node.js
+      # --------------------------------------------------------
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      # --------------------------------------------------------
+      # 4. Mostrar información del runner
       # --------------------------------------------------------
       - name: Mostrar información del runner
         shell: powershell
@@ -73,126 +122,102 @@ jobs:
           Write-Host "Directorio: $env:GITHUB_WORKSPACE"
           Write-Host "=========================================="
 
+          Write-Host "Cuenta que ejecuta el trabajo:"
           whoami
+
+          Write-Host "Versión de Node:"
           node --version
-          npm --version
 
-      # --------------------------------------------------------
-      # 2. Validar el flujo de ramas
-      # --------------------------------------------------------
-      - name: Validar ramas permitidas
-        shell: powershell
-        env:
-          RAMA_ORIGEN: ${{ github.head_ref }}
-          RAMA_DESTINO: ${{ github.base_ref }}
-        run: |
-          Write-Host "Rama de origen: $env:RAMA_ORIGEN"
-          Write-Host "Rama de destino: $env:RAMA_DESTINO"
-
-          # QA solamente acepta ramas feature/*
-          if ($env:RAMA_DESTINO -eq "QA") {
-              if ($env:RAMA_ORIGEN -like "feature/*") {
-                  Write-Host "Flujo permitido: $env:RAMA_ORIGEN -> QA"
-                  exit 0
-              }
-
-              throw "QA solamente acepta Pull Requests desde feature/*."
-          }
-
-          # main solamente acepta cambios desde QA
-          if ($env:RAMA_DESTINO -eq "main") {
-              if ($env:RAMA_ORIGEN -eq "QA") {
-                  Write-Host "Flujo permitido: QA -> main"
-                  exit 0
-              }
-
-              throw "main solamente acepta Pull Requests desde QA."
-          }
-
-          throw "Flujo de ramas no permitido."
-
-      # --------------------------------------------------------
-      # 3. Descargar el código del Pull Request
-      # --------------------------------------------------------
-      - name: Descargar código del Pull Request
-        uses: actions/checkout@v7
-        with:
-          clean: true
-          fetch-depth: 1
-          persist-credentials: false
-
-      # --------------------------------------------------------
-      # 4. Configurar Node.js
-      # --------------------------------------------------------
-      - name: Configurar Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          package-manager-cache: false
-
-      - name: Mostrar versiones de Node y npm
-        shell: powershell
-        run: |
-          node --version
+          Write-Host "Versión de npm:"
           npm --version
 
       # ========================================================
       # FRONTEND
       # ========================================================
 
+      # --------------------------------------------------------
+      # 5. Instalar dependencias del frontend
+      # --------------------------------------------------------
       - name: Instalar dependencias del frontend
         working-directory: frontend
         shell: powershell
-        run: npm ci
+        run: |
+          npm ci
 
+      # --------------------------------------------------------
+      # 6. Ejecutar ESLint del frontend
+      # --------------------------------------------------------
       - name: Ejecutar ESLint del frontend
         working-directory: frontend
         shell: powershell
-        run: npm run lint
+        run: |
+          npm run lint
 
+      # --------------------------------------------------------
+      # 7. Compilar el frontend
+      # --------------------------------------------------------
       - name: Compilar frontend
         working-directory: frontend
         shell: powershell
-        run: npm run build
+        run: |
+          npm run build
 
       # ========================================================
       # BACKEND
       # ========================================================
 
+      # --------------------------------------------------------
+      # 8. Instalar dependencias del backend
+      # --------------------------------------------------------
       - name: Instalar dependencias del backend
         working-directory: backend
         shell: powershell
-        run: npm ci
+        run: |
+          npm ci
 
+      # --------------------------------------------------------
+      # 9. Ejecutar ESLint del backend
+      # --------------------------------------------------------
       - name: Ejecutar ESLint del backend
         working-directory: backend
         shell: powershell
-        run: npm run lint
+        run: |
+          npm run lint
 
+      # --------------------------------------------------------
+      # 10. Ejecutar pruebas del backend si existen
+      # --------------------------------------------------------
       - name: Ejecutar pruebas del backend
         working-directory: backend
         shell: powershell
-        run: npm test --if-present
+        run: |
+          npm run test --if-present
 
+      # --------------------------------------------------------
+      # 11. Compilar el backend
+      # --------------------------------------------------------
       - name: Compilar backend
         working-directory: backend
         shell: powershell
-        run: npm run build
+        run: |
+          npm run build
 
 
   # ============================================================
   # TRABAJO 2:
-  # DOCKERIZAR Y EJECUTAR TODO EN DEISY-SISTEMA
+  # DOCKERIZAR Y EJECUTAR FRONTEND Y BACKEND
   # ============================================================
   dockerizar-sistema:
     name: Dockerizar frontend y backend
 
+    # Esperar a que la validación anterior termine.
     needs:
       - validar-sistema
 
-    # Solo continúa si la validación anterior terminó correctamente.
+    # Ejecutar solamente cuando el primer trabajo sea exitoso.
     if: ${{ needs.validar-sistema.result == 'success' && github.event.pull_request.head.repo.full_name == github.repository }}
 
+    # Ejecutar en el mismo runner DEISY-SISTEMA.
     runs-on:
       - self-hosted
       - windows
@@ -201,7 +226,6 @@ jobs:
     timeout-minutes: 30
 
     steps:
-
       # --------------------------------------------------------
       # 1. Descargar nuevamente el código
       # --------------------------------------------------------
@@ -229,26 +253,30 @@ jobs:
           whoami
 
       # --------------------------------------------------------
-      # 3. Comprobar que Docker esté disponible
+      # 3. Comprobar Docker Desktop y Docker Engine
       # --------------------------------------------------------
       - name: Comprobar Docker
         shell: powershell
         run: |
-          Write-Host "Ubicación de Docker:"
+          Write-Host "Buscando Docker:"
           where.exe docker
 
-          Write-Host "Versión de Docker:"
+          if ($LASTEXITCODE -ne 0) {
+              throw "Docker no está disponible en el PATH del runner."
+          }
+
+          Write-Host "Comprobando Docker Client y Server:"
           docker version
 
           if ($LASTEXITCODE -ne 0) {
               throw "El runner no puede conectarse con Docker Engine."
           }
 
-          Write-Host "Información de Docker:"
+          Write-Host "Obteniendo información de Docker:"
           docker info
 
           if ($LASTEXITCODE -ne 0) {
-              throw "No se pudo obtener información de Docker."
+              throw "No fue posible obtener información de Docker."
           }
 
       # --------------------------------------------------------
@@ -263,8 +291,7 @@ jobs:
           )
 
           foreach ($contenedor in $contenedores) {
-              $id = docker ps -aq `
-                --filter "name=^/$contenedor$"
+              $id = docker ps -aq --filter "name=^/$contenedor$"
 
               if ($id) {
                   Write-Host "Eliminando contenedor anterior: $contenedor"
@@ -275,16 +302,20 @@ jobs:
               }
           }
 
+          # Evita que Docker marque el paso como error
+          # cuando los contenedores todavía no existen.
           exit 0
 
       # ========================================================
-      # CONSTRUIR BACKEND
+      # CONSTRUIR IMAGEN DEL BACKEND
       # ========================================================
 
       - name: Construir imagen del backend
         shell: powershell
         run: |
-          Write-Host "Construyendo $env:BACKEND_IMAGE"
+          Write-Host "=========================================="
+          Write-Host "Construyendo imagen: $env:BACKEND_IMAGE"
+          Write-Host "=========================================="
 
           docker build `
             --file "./backend/Dockerfile" `
@@ -298,13 +329,15 @@ jobs:
           docker image inspect $env:BACKEND_IMAGE
 
       # ========================================================
-      # CONSTRUIR FRONTEND
+      # CONSTRUIR IMAGEN DEL FRONTEND
       # ========================================================
 
       - name: Construir imagen del frontend
         shell: powershell
         run: |
-          Write-Host "Construyendo $env:FRONTEND_IMAGE"
+          Write-Host "=========================================="
+          Write-Host "Construyendo imagen: $env:FRONTEND_IMAGE"
+          Write-Host "=========================================="
 
           docker build `
             --file "./frontend/Dockerfile" `
@@ -318,57 +351,57 @@ jobs:
           docker image inspect $env:FRONTEND_IMAGE
 
       # ========================================================
-      # EJECUTAR BACKEND
+      # EJECUTAR CONTENEDOR DEL BACKEND
       # ========================================================
 
       - name: Ejecutar contenedor del backend
         shell: powershell
         run: |
-          Write-Host "Iniciando backend..."
+          Write-Host "Iniciando el backend..."
 
           docker run `
             --detach `
             --name $env:BACKEND_CONTAINER `
-            --publish "127.0.0.1:${env:BACKEND_PORT}:3001" `
+            --publish "127.0.0.1:$($env:BACKEND_PORT):3001" `
             --env PORT=3001 `
             --env FRONTEND_URL=http://127.0.0.1:3000 `
             $env:BACKEND_IMAGE
 
           if ($LASTEXITCODE -ne 0) {
-              throw "No fue posible iniciar el backend."
+              throw "No fue posible iniciar el contenedor del backend."
           }
 
           docker ps --filter "name=$env:BACKEND_CONTAINER"
 
       # ========================================================
-      # EJECUTAR FRONTEND
+      # EJECUTAR CONTENEDOR DEL FRONTEND
       # ========================================================
 
       - name: Ejecutar contenedor del frontend
         shell: powershell
         run: |
-          Write-Host "Iniciando frontend..."
+          Write-Host "Iniciando el frontend..."
 
           docker run `
             --detach `
             --name $env:FRONTEND_CONTAINER `
-            --publish "127.0.0.1:${env:FRONTEND_PORT}:3000" `
+            --publish "127.0.0.1:$($env:FRONTEND_PORT):3000" `
             $env:FRONTEND_IMAGE
 
           if ($LASTEXITCODE -ne 0) {
-              throw "No fue posible iniciar el frontend."
+              throw "No fue posible iniciar el contenedor del frontend."
           }
 
           docker ps --filter "name=$env:FRONTEND_CONTAINER"
 
       # ========================================================
-      # PROBAR BACKEND
+      # COMPROBAR EL BACKEND
       # ========================================================
 
       - name: Comprobar API del backend
         shell: powershell
         run: |
-          $url = "http://127.0.0.1:${env:BACKEND_PORT}/api/health"
+          $url = "http://127.0.0.1:$($env:BACKEND_PORT)/api/health"
           $backendDisponible = $false
 
           for ($intento = 1; $intento -le 15; $intento++) {
@@ -382,6 +415,8 @@ jobs:
                   if ($respuesta.status -eq "ok") {
                       Write-Host "Backend funcionando correctamente."
                       Write-Host "Servicio: $($respuesta.servicio)"
+                      Write-Host "Mensaje: $($respuesta.mensaje)"
+
                       $backendDisponible = $true
                       break
                   }
@@ -396,20 +431,23 @@ jobs:
           }
 
           if (-not $backendDisponible) {
-              Write-Host "Logs del backend:"
+              Write-Host "=========================================="
+              Write-Host "Logs del backend"
+              Write-Host "=========================================="
+
               docker logs $env:BACKEND_CONTAINER
 
               throw "Falló la comprobación del backend."
           }
 
       # ========================================================
-      # PROBAR FRONTEND
+      # COMPROBAR EL FRONTEND
       # ========================================================
 
       - name: Comprobar aplicación frontend
         shell: powershell
         run: |
-          $url = "http://127.0.0.1:${env:FRONTEND_PORT}"
+          $url = "http://127.0.0.1:$($env:FRONTEND_PORT)"
           $frontendDisponible = $false
 
           for ($intento = 1; $intento -le 15; $intento++) {
@@ -425,6 +463,7 @@ jobs:
 
                   if ($respuesta.StatusCode -eq 200) {
                       Write-Host "Frontend funcionando correctamente."
+
                       $frontendDisponible = $true
                       break
                   }
@@ -439,34 +478,37 @@ jobs:
           }
 
           if (-not $frontendDisponible) {
-              Write-Host "Logs del frontend:"
+              Write-Host "=========================================="
+              Write-Host "Logs del frontend"
+              Write-Host "=========================================="
+
               docker logs $env:FRONTEND_CONTAINER
 
               throw "Falló la comprobación del frontend."
           }
 
       # --------------------------------------------------------
-      # 8. Mostrar imágenes creadas
+      # 9. Mostrar las imágenes creadas
       # --------------------------------------------------------
       - name: Mostrar imágenes Docker creadas
         shell: powershell
         run: |
           Write-Host "=========================================="
-          Write-Host "Imagen del frontend:"
+          Write-Host "Imagen del frontend"
           Write-Host "=========================================="
 
           docker images `
             --filter "reference=$env:FRONTEND_IMAGE"
 
           Write-Host "=========================================="
-          Write-Host "Imagen del backend:"
+          Write-Host "Imagen del backend"
           Write-Host "=========================================="
 
           docker images `
             --filter "reference=$env:BACKEND_IMAGE"
 
       # --------------------------------------------------------
-      # 9. Mostrar logs cuando falle algún paso
+      # 10. Mostrar logs cuando falle algún paso
       # --------------------------------------------------------
       - name: Mostrar logs de diagnóstico
         if: ${{ failure() }}
@@ -484,10 +526,11 @@ jobs:
 
           docker logs $env:BACKEND_CONTAINER 2>$null
 
+          # Este paso no debe reemplazar el error original.
           exit 0
 
       # --------------------------------------------------------
-      # 10. Eliminar contenedores temporales
+      # 11. Eliminar siempre los contenedores temporales
       # --------------------------------------------------------
       - name: Eliminar contenedores temporales
         if: ${{ always() }}
@@ -500,4 +543,6 @@ jobs:
 
           Write-Host "Limpieza terminada."
 
+          # Evita que un contenedor inexistente marque la limpieza
+          # como fallida.
           exit 0
