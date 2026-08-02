@@ -7,9 +7,13 @@ const router = Router();
 router.get('/', async (req: Request, res: Response) => {
     try {
         // Métricas para las Tarjetas
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [[{ totalFichas }]]: any = await db.query('SELECT COUNT(*) as totalFichas FROM FICHAS_BUSQUEDA');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [[{ totalHallazgos }]]: any = await db.query('SELECT COUNT(*) as totalHallazgos FROM HALLAZGOS'); 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [[{ totalReportes }]]: any = await db.query('SELECT COUNT(*) as totalReportes FROM REPORTES'); 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [[{ totalUsuarios }]]: any = await db.query('SELECT COUNT(*) as totalUsuarios FROM USUARIOS'); 
 
         // Datos para Gráfica de Dona
