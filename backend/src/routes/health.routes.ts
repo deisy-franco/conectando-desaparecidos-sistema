@@ -10,3 +10,5 @@ healthRouter.get("/", (_request, response) => {
     fecha: new Date().toISOString(),
   });
 });
+
+export default healthRouter;

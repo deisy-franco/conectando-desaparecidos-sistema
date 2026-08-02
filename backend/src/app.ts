@@ -1,6 +1,7 @@
 // src/app.ts
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
+import path from 'path';
 //import path from 'path';
 
 // Importamos todas tus rutas separadas
@@ -17,8 +18,9 @@ app.use(cors());
 app.use(express.json());
 
 // Expone la carpeta uploads para que el navegador pueda ver las fotos
-//app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-app.get('/api/health', (req, res) => {
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', mensaje: 'Backend funcionando' });
 });
 // Conectamos los Endpoints (Nota cómo quitamos el '/api/fichas' de los archivos individuales porque aquí se define la base)
@@ -28,5 +30,6 @@ app.get('/api/health', (req, res) => {
 //app.use('/api/hallazgos', hallazgosRoutes);
 //app.use('/api/reportes', reportesRoutes);
 //app.use('/api/estadisticas', estadisticasRoutes);
+
 
 export default app;
