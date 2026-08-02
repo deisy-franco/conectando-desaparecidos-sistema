@@ -6,7 +6,7 @@ import path from 'path';
 // Importamos todas tus rutas separadas
 //import usuariosRoutes from './routes/usuarios';
 import fichasRoutes from './routes/fichas';
-//import hallazgosRoutes from './routes/hallazgos';
+import hallazgosRoutes from './routes/hallazgos';
 //import reportesRoutes from './routes/reportes';
 //import estadisticasRoutes from './routes/estadisticas';
 
@@ -26,7 +26,7 @@ app.get('/api/health', (req, res) => {
 //app.use('/api/usuarios', usuariosRoutes);
 //app.use('/api/login', usuariosRoutes); // Puedes meter el login dentro del archivo de usuarios
 app.use('/api/fichas', fichasRoutes);
-//app.use('/api/hallazgos', hallazgosRoutes);
+app.use('/api/hallazgos', hallazgosRoutes);
 //app.use('/api/reportes', reportesRoutes);
 //app.use('/api/estadisticas', estadisticasRoutes);
 
