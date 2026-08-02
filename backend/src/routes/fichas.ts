@@ -27,6 +27,7 @@ router.post('/', upload.single('foto'), async (req: Request, res: Response) => {
 
         const fotografia_url = req.file ? `http://localhost:3001/uploads/${req.file.filename}` : '/logo.png';
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [resultado]: any = await db.query(
             `INSERT INTO FICHAS_BUSQUEDA (
                 usuario_id, nombre, edad, genero, fotografia_url, fecha_desaparicion,
@@ -52,11 +53,13 @@ router.post('/', upload.single('foto'), async (req: Request, res: Response) => {
 });
 
 // ACTUALIZAR el estatus de una ficha a 'encontrada'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 router.put('/:id/estatus', async (req: Request, res: Response): Promise<any> => {
     try {
         const fichaId = req.params.id;
         const { usuario_id } = req.body;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [resultado]: any = await db.query(
             `UPDATE FICHAS_BUSQUEDA 
              SET estatus = 'encontrada' 

@@ -10,9 +10,11 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const storage = multer.diskStorage({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     destination: function (_req: any, file: any, cb: any) {
         cb(null, 'uploads/'); 
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     filename: function (_req: any, file: any, cb: any) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, uniqueSuffix + path.extname(file.originalname)); 
