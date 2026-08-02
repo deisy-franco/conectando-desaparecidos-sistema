@@ -7,7 +7,7 @@ import path from 'path';
 //import usuariosRoutes from './routes/usuarios';
 import fichasRoutes from './routes/fichas';
 import hallazgosRoutes from './routes/hallazgos';
-//import reportesRoutes from './routes/reportes';
+import reportesRoutes from './routes/reportes';
 //import estadisticasRoutes from './routes/estadisticas';
 
 const app = express();
@@ -27,7 +27,7 @@ app.get('/api/health', (req, res) => {
 //app.use('/api/login', usuariosRoutes); // Puedes meter el login dentro del archivo de usuarios
 app.use('/api/fichas', fichasRoutes);
 app.use('/api/hallazgos', hallazgosRoutes);
-//app.use('/api/reportes', reportesRoutes);
+app.use('/api/reportes', reportesRoutes);
 //app.use('/api/estadisticas', estadisticasRoutes);
 
 
