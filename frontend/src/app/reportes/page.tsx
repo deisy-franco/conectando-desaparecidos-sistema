@@ -30,7 +30,7 @@ export default function ReportesPage() {
             minHeight: '100vh'
         }}>
 
-            {/* // eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
+            {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
             {reportes.map((reporte: any) => {
                 
                 let listaFotos = ['/logo.png'];
