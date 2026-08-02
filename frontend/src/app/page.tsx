@@ -1,65 +1,167 @@
-import Image from "next/image";
+'use client'
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import Button from '@mui/material/Button';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import GppMaybeOutlinedIcon from '@mui/icons-material/GppMaybeOutlined';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
+import PersonSearchOutlinedIcon from '@mui/icons-material/PersonSearchOutlined';
+import FindInPageRoundedIcon from '@mui/icons-material/FindInPageRounded';
+import FindInPageOutlinedIcon from '@mui/icons-material/FindInPageOutlined';
+import { useAuth } from '@/context/AuthContext';
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+export default function Inicio() {
+    const { usuario } = useAuth();
+
+    const router = useRouter(); 
+
+    return (
+        <div style={{ backgroundColor: '#050505', minHeight: '100vh', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            
+            <div style={{
+                backgroundColor: '#050505',
+                width: '100%',
+                minHeight: '350px',
+                borderRadius: '24px',
+                display: 'flex',
+                overflow: 'hidden', 
+                color: 'white',
+                flexWrap: 'wrap' 
+            }}>
+                
+                <div style={{ flex: '1 1 50%', padding: '3rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
+                    <h1 style={{ fontSize: '2.8rem', fontWeight: 'bold', lineHeight: '1.1', margin: 0 }}>
+                        Unidos para buscar,<br />encontrar y apoyar.
+                    </h1>
+                    <p style={{ fontSize: '1.1rem', color: '#e2e8f0', margin: '1.5rem 0', lineHeight: '1.5' }}>
+                        Cada publicación puede ser la pieza<br />que falta para volver a casa.
+                    </p>
+                    
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                        <Button 
+                            variant="contained" 
+                            onClick={() => router.push('/formulario')}
+                            style={{ backgroundColor: '#cc0000', color: 'white', textTransform: 'none', fontWeight: 'bold', padding: '0.6rem 1.5rem', borderRadius: '8px' }}
+                        >
+                            Crear ficha de búsqueda
+                        </Button>
+                        <Button 
+                            variant="outlined"
+                            onClick={()=> router.push('/hallazgos')} 
+                            style={{ borderColor: 'white', color: 'white', textTransform: 'none', fontWeight: 'bold', padding: '0.6rem 1.5rem', borderRadius: '8px' }}
+                        >
+                            Ver hallazgos
+                        </Button>
+                    </div>
+                </div>
+
+                <div style={{ flex: '1 1 50%', position: 'relative', minHeight: '350px', minWidth: '300px' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                    
+                    <div style={{ 
+                        position: 'absolute', 
+                        top: 0, 
+                        left: 0, 
+                        width: '120px', 
+                        height: '100%', 
+                        background: 'linear-gradient(to right, #050505 0%, transparent 100%)' 
+                    }}></div>
+                    
+                    <img 
+                        src="/fondoPaginaPrincipal.png" 
+                        alt="Personas" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} 
+                    />
+                    </div>
+                </div>
+            </div>
+
+            {/*Tarjetas Blancas*/}
+            <div style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '24px',
+                padding: '2rem 3rem',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+            }}>
+                <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.3rem', fontWeight: 'bold', color: '#0f172a' }}>
+                    Acciones rápidas
+                </h2>
+
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                    
+                    <div style={estiloTarjetaAccion} onClick={() => router.push('/fichasDeBusqueda')}>
+                        <PersonSearchOutlinedIcon style={estiloIcono} />
+                        <h3 style={estiloTituloTarjeta}>Ver fichas<br/>de búsqueda</h3>
+                        <p style={estiloTextoTarjeta}>Explora las fichas<br />de busqueda publicadas</p>
+                    </div>
+
+                    <div style={estiloTarjetaAccion} onClick={() => router.push('/formulario')}>
+                        <PersonSearchIcon style={estiloIcono} />
+                        <h3 style={estiloTituloTarjeta}>Crear ficha<br/>de búsqueda</h3>
+                        <p style={estiloTextoTarjeta}>Reporta una desaparición sin esperar 72 horas</p>
+                    </div>
+
+                    <div style={estiloTarjetaAccion} onClick={() => router.push('/hallazgos')}>
+                        <FindInPageOutlinedIcon style={estiloIcono} />
+                        <h3 style={estiloTituloTarjeta}>Ver hallazgos</h3>
+                        <p style={estiloTextoTarjeta}>Explora los hallazgos publicados</p>
+                    </div>
+
+                    {usuario.id && (<div style={estiloTarjetaAccion} onClick={() => router.push('/crearHallazgo')}>
+                        <FindInPageRoundedIcon style={estiloIcono} />
+                        <h3 style={estiloTituloTarjeta}>Publicar hallazgo</h3>
+                        <p style={estiloTextoTarjeta}>Sube fotos de objetos encontrados</p>
+                    </div>)}
+
+                    <div style={estiloTarjetaAccion} onClick={() => router.push('/reportes')}>
+                        <GppMaybeOutlinedIcon style={estiloIcono} />
+                        <h3 style={estiloTituloTarjeta}>Ver reportes</h3>
+                        <p style={estiloTextoTarjeta}>Explora los reportes publicados</p>
+                    </div>
+
+                    {usuario.id && (<div style={estiloTarjetaAccion} onClick={() => router.push('/crearReporte')}>
+                        <GppMaybeIcon style={estiloIcono} />
+                        <h3 style={estiloTituloTarjeta}>Publicar Reporte</h3>
+                        <p style={estiloTextoTarjeta}>Reporta avistamientos<br />sospechosos</p>
+                    </div>)}
+                </div>
+            </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    );
 }
+
+//Estilos
+const estiloTarjetaAccion = {
+    flex: '1 1 180px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    textAlign: 'center' as const,
+    padding: '1.5rem 1rem',
+    borderRadius: '12px',
+    border: '1px solid #f1f5f9',
+    backgroundColor: '#ffffff',
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+};
+
+const estiloIcono = {
+    fontSize: '2.5rem',
+    color: '#0f172a',
+    marginBottom: '0.8rem'
+};
+
+const estiloTituloTarjeta = {
+    fontSize: '0.95rem',
+    fontWeight: 'bold',
+    color: '#0f172a',
+    margin: '0 0 0.5rem 0',
+    lineHeight: '1.2'
+};
+
+const estiloTextoTarjeta = {
+    fontSize: '0.75rem',
+    color: '#64748b',
+    margin: 0,
+    lineHeight: '1.4'
+};
