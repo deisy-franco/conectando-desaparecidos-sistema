@@ -8,7 +8,7 @@ import path from 'path';
 import fichasRoutes from './routes/fichas';
 import hallazgosRoutes from './routes/hallazgos';
 import reportesRoutes from './routes/reportes';
-//import estadisticasRoutes from './routes/estadisticas';
+import estadisticasRoutes from './routes/estadisticas';
 
 const app = express();
 
@@ -28,7 +28,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/fichas', fichasRoutes);
 app.use('/api/hallazgos', hallazgosRoutes);
 app.use('/api/reportes', reportesRoutes);
-//app.use('/api/estadisticas', estadisticasRoutes);
+app.use('/api/estadisticas', estadisticasRoutes);
 
 
 export default app;
