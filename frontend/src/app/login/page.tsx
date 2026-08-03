@@ -6,6 +6,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Button from '@mui/material/Button';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { API_URL } from '@/lib/api';
 
 export default function AuthPage() {
     
@@ -26,7 +27,7 @@ export default function AuthPage() {
         e.preventDefault();
 
         try {
-            const respuesta = await axios.post('http://localhost:3001/api/login', {
+            const respuesta = await axios.post(`${API_URL}/api/login`, {
                 correo_electronico: loginDatos.correo,
                 password: loginDatos.contrasena
             });
@@ -53,7 +54,7 @@ export default function AuthPage() {
         };
 
         try {
-            const respuesta = await axios.post('http://localhost:3001/api/usuarios', nuevoUsuarioDB);
+            const respuesta = await axios.post(`${API_URL}/api/usuarios`, nuevoUsuarioDB);
             alert("¡Usuario guardado en la base de datos real!");
 
             setRegistroDatos({ nombre: '', correo: '', contrasena: '' });

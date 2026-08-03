@@ -7,6 +7,7 @@ import Plantilla from '../components/FichaDeBusqueda';
 import { useAuth } from '@/context/AuthContext';
 import { Button, Popover } from '@mui/material';
 import axios from 'axios';
+import { API_URL } from '@/lib/api';
 
 export default function Page(){
     const { usuario } = useAuth();
@@ -131,7 +132,7 @@ export default function Page(){
     console.log("=== ENVIANDO FORM DATA CON ARCHIVO ===");
 
     try {
-        const respuesta = await axios.post('http://localhost:3001/api/fichas', formData, {
+        const respuesta = await axios.post(`${API_URL}/api/fichas`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -156,7 +157,7 @@ export default function Page(){
             estatus: 'desaparecido'
         };
 
-        const respuesta = await axios.post('http://localhost:3001/api/fichas', payload);
+        const respuesta = await axios.post(`${API_URL}/api/fichas`, payload);
 
         if(respuesta.status === 201) {
             alert('Ficha publicada correctamente');

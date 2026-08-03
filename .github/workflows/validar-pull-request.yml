@@ -335,12 +335,11 @@ jobs:
       - name: Construir imagen del frontend
         shell: powershell
         run: |
-          Write-Host "=========================================="
           Write-Host "Construyendo imagen: $env:FRONTEND_IMAGE"
-          Write-Host "=========================================="
 
           docker build `
             --file "./frontend/Dockerfile" `
+            --build-arg NEXT_PUBLIC_API_URL=http://127.0.0.1:3001 `
             --tag $env:FRONTEND_IMAGE `
             "./frontend"
 
@@ -349,7 +348,6 @@ jobs:
           }
 
           docker image inspect $env:FRONTEND_IMAGE
-
       # ========================================================
       # EJECUTAR CONTENEDOR DEL BACKEND
       # ========================================================
@@ -365,6 +363,14 @@ jobs:
             --publish "127.0.0.1:$($env:BACKEND_PORT):3001" `
             --env PORT=3001 `
             --env FRONTEND_URL=http://127.0.0.1:3000 `
+            --env API_PUBLIC_URL=http://127.0.0.1:3001 `
+            --env DB_HOST=host.docker.internal `
+            --env DB_PORT=3306 `
+            --env DB_USER=pipeline `
+            --env DB_PASSWORD=pipeline `
+            --env DB_NAME=pipeline `
+            --env DB_SSL=false `
+            --env UPLOAD_DIR=/app/uploads `
             $env:BACKEND_IMAGE
 
           if ($LASTEXITCODE -ne 0) {

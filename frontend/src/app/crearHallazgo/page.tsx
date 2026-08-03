@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import FormularioHallazgo from '../components/FormularioHallazgo'
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { API_URL } from '@/lib/api';
 
 export default function Page() {
     const router = useRouter();
@@ -84,7 +85,7 @@ export default function Page() {
         });
 
         try {
-            const respuesta = await fetch('http://localhost:3001/api/hallazgos', {
+            const respuesta = await fetch(`${API_URL}/api/hallazgos`, {
                 method: 'POST',
                 body: formData,
             });
