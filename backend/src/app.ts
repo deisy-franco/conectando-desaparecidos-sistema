@@ -1,35 +1,126 @@
-// src/app.ts
-import express, { Request, Response } from 'express';
 import cors from 'cors';
-import path from 'path';
-//import path from 'path';
+import express, {
+    Request,
+    Response,
+} from 'express';
 
-// Importamos todas tus rutas separadas
-import usuariosRoutes from './routes/usuarios';
+import {
+    FRONTEND_URL,
+    UPLOAD_DIR,
+} from './config';
+
+import db from './db';
+
+import estadisticasRoutes from './routes/estadisticas';
 import fichasRoutes from './routes/fichas';
 import hallazgosRoutes from './routes/hallazgos';
+import loginRoutes from './routes/login';
 import reportesRoutes from './routes/reportes';
-import estadisticasRoutes from './routes/estadisticas';
+import usuariosRoutes from './routes/usuarios';
 
 const app = express();
 
-// Middlewares globales
-app.use(cors()); 
-app.use(express.json());
+app.disable('x-powered-by');
 
-// Expone la carpeta uploads para que el navegador pueda ver las fotos
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use(
+    cors({
+        origin: FRONTEND_URL,
+        credentials: true,
+    })
+);
 
-app.get('/api/health', (req: Request, res: Response) => {
-    res.status(200).json({ status: 'ok', mensaje: 'Backend funcionando' });
-});
-// Conectamos los Endpoints (Nota cómo quitamos el '/api/fichas' de los archivos individuales porque aquí se define la base)
+app.use(
+    express.json({
+        limit: '10mb',
+    })
+);
+
+app.use(
+    '/uploads',
+    express.static(UPLOAD_DIR)
+);
+
+/*
+ * Comprueba únicamente que el servidor Express esté funcionando.
+ */
+app.get(
+    '/api/health',
+    (_request: Request, response: Response) => {
+        response.status(200).json({
+            status: 'ok',
+            mensaje: 'Backend funcionando',
+        });
+    }
+);
+
+/*
+ * Comprueba que el backend pueda conectarse a MySQL.
+ * Esta es la ruta nueva que debes agregar.
+ */
+app.get(
+    '/api/health/db',
+    async (_request: Request, response: Response) => {
+        try {
+            await db.query('SELECT 1 AS conexion');
+
+            response.status(200).json({
+                status: 'ok',
+                mensaje: 'Conexión con MySQL funcionando',
+            });
+        } catch (error) {
+            console.error(
+                'Error al comprobar MySQL:',
+                error
+            );
+
+            response.status(500).json({
+                status: 'error',
+                mensaje: 'No fue posible conectar con MySQL',
+            });
+        }
+    }
+);
+
+/*
+ * Comprueba que el backend pueda conectarse a MySQL.
+ */
+app.get(
+    '/api/health/db',
+    async (_request: Request, response: Response) => {
+        try {
+            await db.query('SELECT 1 AS conexion');
+
+            response.status(200).json({
+                status: 'ok',
+                mensaje: 'Conexión con MySQL funcionando',
+            });
+        } catch (error) {
+            console.error('Error al comprobar MySQL:', error);
+
+            response.status(500).json({
+                status: 'error',
+                mensaje: 'No fue posible conectar con MySQL',
+            });
+        }
+    }
+);
+
+/*
+ * Rutas principales de la aplicación.
+ */
 app.use('/api/usuarios', usuariosRoutes);
-app.use('/api/login', usuariosRoutes); // Puedes meter el login dentro del archivo de usuarios
+app.use('/api/login', loginRoutes);
 app.use('/api/fichas', fichasRoutes);
 app.use('/api/hallazgos', hallazgosRoutes);
 app.use('/api/reportes', reportesRoutes);
 app.use('/api/estadisticas', estadisticasRoutes);
 
+app.use(
+    (_request: Request, response: Response) => {
+        response.status(404).json({
+            mensaje: 'Ruta no encontrada',
+        });
+    }
+);
 
 export default app;

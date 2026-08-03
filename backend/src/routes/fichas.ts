@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import db from '../db'; // Ajusta esto si tu db.ts está en otra carpeta
 import { upload } from '../middlewares/upload';
+import { API_PUBLIC_URL } from '../config';
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.post('/', upload.single('foto'), async (req: Request, res: Response) => {
             correo_electronico, numero, estatus
         } = req.body;
 
-        const fotografia_url = req.file ? `http://localhost:3001/uploads/${req.file.filename}` : '/logo.png';
+        const fotografia_url = req.file ? `${API_PUBLIC_URL}/uploads/${req.file.filename}` : `${API_PUBLIC_URL}/logo.png`;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [resultado]: any = await db.query(

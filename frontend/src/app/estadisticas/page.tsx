@@ -17,6 +17,7 @@ import { Button } from '@mui/material';
 import { useAuth } from '@/context/AuthContext';
 import { PlantillaEstadisticas } from './PlantillaEstadisticas';
 import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
+import { API_URL } from '@/lib/api';
 
 const COLORES_ESTATUS = ['#ef4444', '#22c55e', '#64748b', '#f59e0b'];
 
@@ -35,7 +36,7 @@ export default function Page() {
     useEffect(() => {
         const cargarEstadisticas = async () => {
             try {
-                const { data } = await axios.get('http://localhost:3001/api/estadisticas');
+                const { data } = await axios.get(`${API_URL}/api/estadisticas`);
                 
                 setTotales({
                     fichas: data.tarjetas.totalFichas,

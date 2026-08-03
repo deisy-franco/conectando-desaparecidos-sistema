@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect, CSSProperties } from 'react';
 import axios from 'axios';
+import { API_URL } from '@/lib/api';
 
 export default function VisorDatosBD() {
     // ESTADOS: Cumpliendo el manejo de carga (loading) y datos requeridos por la rúbrica
@@ -20,10 +21,10 @@ export default function VisorDatosBD() {
             try {
                 // Consumo de MÚLTIPLES ENDPOINTS mediante Axios
                 const [resUsuarios, resFichas, resHallazgos, resReportes] = await Promise.all([
-                    axios.get('http://localhost:3001/api/usuarios'),
-                    axios.get('http://localhost:3001/api/fichas'),
-                    axios.get('http://localhost:3001/api/hallazgos'),
-                    axios.get('http://localhost:3001/api/reportes')
+                    axios.get(`${API_URL}/api/usuarios`),
+                    axios.get(`${API_URL}/api/fichas`),
+                    axios.get(`${API_URL}/api/hallazgos`),
+                    axios.get(`${API_URL}/api/reportes`)
                 ]);
 
                 // Asignación de datos exitosa

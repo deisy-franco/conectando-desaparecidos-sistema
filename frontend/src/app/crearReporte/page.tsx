@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import FormularioReporte from '../components/FormularioReporte'
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { API_URL } from '@/lib/api';
 
 export default function Page(){
     const { usuario } = useAuth();
@@ -86,7 +87,7 @@ export default function Page(){
         }
 
         try {
-            const respuesta = await fetch('http://localhost:3001/api/reportes', {
+            const respuesta = await fetch(`${API_URL}/api/reportes`, {
                 method: 'POST',
                 body: formData,
             });

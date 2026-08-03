@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Tarjeta from '../components/Tarjeta';
+import { API_URL } from '@/lib/api';
 
 interface FichaBD {
     usuario_id:number;
@@ -38,7 +39,7 @@ export default function Page() {
     useEffect(() => {
         const obtenerFichas = async () => {
             try {
-                const respuesta = await axios.get('http://localhost:3001/api/fichas');
+                const respuesta = await axios.get(`${API_URL}/api/fichas`);
                 setFichas(respuesta.data);
             } catch (error) {
                 console.error("Error obteniendo las fichas:", error);
