@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import axios from 'axios';
 import { useRef } from 'react';
 import html2canvas from 'html2canvas';
+import { API_URL } from '@/lib/api';
 
 //Tarjeta de fiha de busqueda
 export default function Tarjeta({datos}) {
@@ -23,7 +24,7 @@ export default function Tarjeta({datos}) {
       if (!confirmar) return;
 
         try {
-          const respuesta = await axios.put(`http://localhost:3001/api/fichas/${datos.id}/estatus`, {
+          const respuesta = await axios.put(`${API_URL}/api/fichas/${datos.id}/estatus`, {
             usuario_id: usuario.id
           });
 

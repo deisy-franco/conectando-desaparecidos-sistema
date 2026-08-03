@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TarjetaHallazgo from '../components/TarjetaHallazgos';
+import { API_URL } from '@/lib/api';
 
 export default function Page(){
     const [hallazgos, setHallazgos] = useState([]);
@@ -9,7 +10,7 @@ export default function Page(){
     useEffect(() => {
         const cargarHallazgos = async () => {
             try {
-                const respuesta = await axios.get('http://localhost:3001/api/hallazgos');
+                const respuesta = await axios.get(`${API_URL}/api/hallazgos`);
                 setHallazgos(respuesta.data);
             } catch (error) {
                 console.error("Error al obtener los hallazgos:", error);

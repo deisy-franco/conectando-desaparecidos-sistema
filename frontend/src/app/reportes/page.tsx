@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TarjetaReporte from '../components/TarjetaReporte'; 
+import { API_URL } from '@/lib/api';
 
 export default function ReportesPage() {
     const [reportes, setReportes] = useState([]);
@@ -9,7 +10,7 @@ export default function ReportesPage() {
     useEffect(() => {
         const cargarReportes = async () => {
             try {
-                const respuesta = await axios.get('http://localhost:3001/api/reportes');
+                const respuesta = await axios.get(`${API_URL}/api/reportes`);
                 setReportes(respuesta.data);
             } catch (error) {
                 console.error("Error al obtener los reportes:", error);

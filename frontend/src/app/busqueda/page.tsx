@@ -6,6 +6,7 @@ import Tarjeta from '../components/Tarjeta';
 import TarjetaReporte from '../components/TarjetaReporte'; 
 import TarjetaHallazgo from '../components/TarjetaHallazgos';
 import {ubicacionesMexico} from '../components/ubicaciones';
+import { API_URL } from '@/lib/api';
 
 const datosUbicacion: Record<string, string[]> = ubicacionesMexico;
 
@@ -36,9 +37,9 @@ export default function Page() {
         setBusquedaRealizada(true);
         try {
             const [resFichas, resHallazgos, resReportes] = await Promise.all([
-                axios.get('http://localhost:3001/api/fichas').catch(() => ({ data: [] })),
-                axios.get('http://localhost:3001/api/hallazgos').catch(() => ({ data: [] })),
-                axios.get('http://localhost:3001/api/reportes').catch(() => ({ data: [] }))
+                axios.get(`${API_URL}/api/fichas`).catch(() => ({ data: [] })),
+                axios.get(`${API_URL}/api/hallazgos`).catch(() => ({ data: [] })),
+                axios.get(`${API_URL}/api/reportes`).catch(() => ({ data: [] }))
             ]);
 
             let fichasBD = resFichas.data || [];

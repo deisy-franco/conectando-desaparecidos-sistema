@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import db from '../db';
 import { upload } from '../middlewares/upload';
+import { API_PUBLIC_URL } from '../config';
 
 const router = Router();
 
@@ -26,7 +27,7 @@ router.post('/', upload.array('fotos', 10), async (req: Request, res: Response) 
         // Convierte las URLs de las fotos a formato JSON para guardarlas
         let fotos_urls: string[] = [];
         if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-            fotos_urls = req.files.map(file => `http://localhost:3001/uploads/${file.filename}`);
+            fotos_urls = req.files.map(file => `${API_PUBLIC_URL}/uploads/${file.filename}`);
         }
         const fotos_json = JSON.stringify(fotos_urls);
         
